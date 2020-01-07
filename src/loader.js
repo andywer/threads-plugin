@@ -41,7 +41,7 @@ export function pitch (request) {
   const workerOptions = {
     filename: chunkFilename.replace(/\[(?:chunkhash|contenthash)(:\d+(?::\d+)?)?\]/g, '[hash$1]'),
     chunkFilename,
-    globalObject: pluginOptions.globalObject || 'self'
+    globalObject: pluginOptions.globalObject || `(typeof self !== 'undefined' ? self : this)`
   };
 
   const plugins = (pluginOptions.plugins || []).map(plugin => {

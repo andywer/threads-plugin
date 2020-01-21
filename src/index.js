@@ -84,7 +84,7 @@ export default class WorkerPlugin {
       }
     });
 
-    compiler.hooks.afterCompile.tap(NAME, compilation => {
+    compiler.hooks.afterEmit.tap(NAME, compilation => {
       if (workerId === 0) {
         compilation.warnings.push({
           message:

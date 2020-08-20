@@ -59,7 +59,9 @@ export function pitch (request) {
   const workerCompiler = this._compilation.createChildCompiler(NAME, workerOptions, plugins);
   workerCompiler.context = this._compiler.context;
 
-  if (pluginOptions.target && /\bnode\b/.test(pluginOptions.target)) {
+  const target = pluginOptions.target || compilerOptions.target
+
+  if (target && /\bnode\b/.test(target)) {
     new NodeTargetPlugin().apply(workerCompiler);
   }
   (new WebWorkerTemplatePlugin(workerOptions)).apply(workerCompiler);

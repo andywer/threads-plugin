@@ -16,12 +16,39 @@
 
 import * as Types from '@babel/types';
 import path from 'path';
-import ParserHelpers from 'webpack/lib/ParserHelpers';
+import ConstDependency from 'webpack/lib/dependencies/ConstDependency';
 import WORKER_PLUGIN_SYMBOL from './symbol';
 
 const NAME = 'WorkerPlugin';
 const JS_TYPES = ['auto', 'esm', 'dynamic'];
 const workerLoader = path.resolve(__dirname, 'loader.js');
+
+/* taken from webpack 4 source */
+function toConstantDependency(parser, value) {
+  return function constDependency(expr) {
+    var dep = new ConstDependency(value, expr.range, false);
+    dep.loc = expr.loc;
+    parser.state.current.addDependency(dep);
+    return true;
+  };
+}
+
+/* taken from webpack 4 source */
+function addParsedVariableToModule(parser, name, expression) {
+  if (!parser.state.current.addVariable) return false;
+  const deps = [];
+  parser.parse(expression, {
+    current: {
+      addDependency: (dep) => {
+        dep.userRequest = name;
+        deps.push(dep);
+      },
+    },
+    module: parser.state.module,
+  });
+  parser.state.current.addVariable(name, expression, deps);
+  return true;
+}
 
 export default class WorkerPlugin {
   constructor (options) {
@@ -76,9 +103,9 @@ export default class WorkerPlugin {
             const loaderOptions = { name: opts.name || workerId + '' };
             const req = `require(${JSON.stringify(workerLoader + '?' + JSON.stringify(loaderOptions) + '!' + dep.string)})`;
             const id = `__webpack__worker__${workerId++}`;
-            ParserHelpers.toConstantDependency(parser, id)(expr.arguments[0]);
+            toConstantDependency(parser, id)(expr.arguments[0]);
 
-            ParserHelpers.addParsedVariableToModule(parser, id, req);
+            addParsedVariableToModule(parser, id, req);
           });
         });
       }

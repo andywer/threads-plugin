@@ -16,7 +16,11 @@
 
 import * as Types from '@babel/types';
 import path from 'path';
-import ParserHelpers from 'webpack/lib/ParserHelpers';
+let ParserHelpers;
+try {
+  ParserHelpers = require('webpack/lib/javascript/JavascriptParserHelpers'); // Webpack 5
+} catch (e) {}
+ParserHelpers = ParserHelpers || require('webpack/lib/ParserHelpers'); // Webpack 4
 import WORKER_PLUGIN_SYMBOL from './symbol';
 
 const NAME = 'WorkerPlugin';

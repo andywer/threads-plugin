@@ -17,9 +17,14 @@
 import loaderUtils from 'loader-utils';
 import SingleEntryPlugin from 'webpack/lib/SingleEntryPlugin';
 import WebWorkerTemplatePlugin from 'webpack/lib/webworker/WebWorkerTemplatePlugin';
-import FetchCompileWasmTemplatePlugin from 'webpack/lib/web/FetchCompileWasmTemplatePlugin';
 import NodeTargetPlugin from 'webpack/lib/node/NodeTargetPlugin';
 import WORKER_PLUGIN_SYMBOL from './symbol';
+
+let FetchCompileWasmPlugin;
+try {
+  FetchCompileWasmPlugin = require('webpack/lib/web/FetchCompileWasmPlugin'); // Webpack 5
+} catch (e) {}
+FetchCompileWasmPlugin = FetchCompileWasmPlugin || require('webpack/lib/web/FetchCompileWasmTemplatePlugin'); // Webpack 4
 
 const NAME = 'WorkerPluginLoader';
 let hasWarned = false;
@@ -65,7 +70,7 @@ export function pitch (request) {
     new NodeTargetPlugin().apply(workerCompiler);
   }
   (new WebWorkerTemplatePlugin(workerOptions)).apply(workerCompiler);
-  (new FetchCompileWasmTemplatePlugin({
+  (new FetchCompileWasmPlugin({
     mangleImports: compilerOptions.optimization.mangleWasmImports
   })).apply(workerCompiler);
   (new SingleEntryPlugin(this.context, request, options.name)).apply(workerCompiler);
@@ -82,7 +87,7 @@ export function pitch (request) {
     if (!err && compilation.errors && compilation.errors.length) {
       err = compilation.errors[0];
     }
-    const entry = entries && entries[0] && entries[0].files[0];
+    const entry = entries && entries[0] && entries[0].files.values().next().value; // compatible with Array (v4) and Set (v5) prototypes
     if (!err && !entry) err = Error(`WorkerPlugin: no entry for ${request}`);
     if (err) return cb(err);
     return cb(null, `module.exports = __webpack_public_path__ + ${JSON.stringify(entry)}`);

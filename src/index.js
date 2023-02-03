@@ -40,13 +40,13 @@ export default class WorkerPlugin {
       for (const type of JS_TYPES) {
         factory.hooks.parser.for(`javascript/${type}`).tap(NAME, parser => {
           parser.hooks.new.for('imported var').tap(NAME, expr => {
-            if (expr.callee.name !== 'Worker') return false
+            if (expr.callee.name !== 'Worker' && expr.callee.name !== 'SharedWorker') return false
 
             const dep = parser.evaluateExpression(expr.arguments[0]);
 
             if (!dep.isString()) {
               parser.state.module.warnings.push({
-                message: 'new Worker() will only be bundled if passed a String.'
+                message: 'new Worker() and new SharedWorker() will only be bundled if passed a String.'
               });
               return false;
             }
@@ -95,7 +95,7 @@ export default class WorkerPlugin {
             'No instantiations of threads.js workers found.\n' +
             'Please check that:\n' +
             '  1. You have configured Babel / TypeScript to not transpile ES modules\n' +
-            '  2. You import `Worker` from `threads` where you use it\n\n' +
+            '  2. You import `Worker` or `SharedWorker` from `threads` where you use it\n\n' +
             'For more details see: https://github.com/andywer/threads-plugin\n'
         })
       }
